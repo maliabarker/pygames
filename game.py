@@ -61,9 +61,50 @@ class Strawberry(GameObject):
         y = [93, 218, 343]
         self.x = -64
         self.y = random.choice(y)
+
+class Player(GameObject):
+    def __init__(self):
+        super(Player, self).__init__(93, 93, 'imgs/player.png')
+        self.dx = 93
+        self.dy = 93
+        self.reset()
+
+    def left(self):
+        if self.dx == 93:
+            self.dx = self.dx
+        else:
+            self.dx -= 125
+
+
+    def right(self):
+        if self.dx == 343:
+            self.dx = self.dx
+        else:
+            self.dx += 125
+
+    def up(self):
+        if self.dy == 93:
+            self.dy = self.dy
+        else:
+            self.dy -= 125
+
+    def down(self):
+        if self.dy == 343:
+            self.dy = self.dy
+        else:
+            self.dy += 125
+
+    def move(self):
+        self.x -= (self.x - self.dx) * 0.25
+        self.y -= (self.y - self.dy) * 0.25
+
+    def reset(self):
+        self.x = 250 - 32
+        self.y = 250 - 32
 # Make an instance of GameObject
 apple=Apple()
 strawberry=Strawberry()
+player=Player()
 
 """
 apple1 = GameObject(70, 70, 'imgs/apple.png')
@@ -84,14 +125,34 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        # Check for event type KEYBOARD
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+            elif event.key == pygame.K_LEFT:
+                print('LEFT')
+                player.left()
+            elif event.key == pygame.K_RIGHT:
+                print('RIGHT')
+                player.right()
+            elif event.key == pygame.K_UP:
+                print('UP')
+                player.up()
+            elif event.key == pygame.K_DOWN:
+                print('DOWN')
+                player.down()
 
     # Clear screen
     screen.fill((255, 255, 255))
-    # Draw gamepieces
+    # Draw apple
     apple.move()
     apple.render(screen)
+    # Draw strawberry
     strawberry.move()
     strawberry.render(screen)
+    # Draw player 
+    player.move()
+    player.render(screen)
     """
     apple1.x += 1
     apple1.render(screen)
