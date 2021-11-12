@@ -7,6 +7,9 @@ pygame.init()
 clock = pygame.time.Clock()
 # Configure the screen
 screen = pygame.display.set_mode([500, 500])
+lanes = [93, 218, 343]
+positive_move = (randint(0, 200) / 100) + 1
+negative_move = ((randint(0, 200) / 100) + 1) * -1
 
 # Create a new instance of Surface
 class GameObject(pygame.sprite.Sprite):
@@ -23,88 +26,144 @@ class GameObject(pygame.sprite.Sprite):
 
 class Apple(GameObject):
     def __init__(self):
-        x = [93, 218, 343]
 
-        super(Apple, self).__init__(random.choice(x), 0, 'imgs/apple.png')
+        super(Apple, self).__init__(random.choice(lanes), 0, 'imgs/apple.png')
         self.dx = 0
         self.dy = (randint(0, 200) / 100) + 1
         self.reset() # call reset here! 
+        print(f'apple: {self.x},{self.y}')
 
     def move(self):
+
         self.x += self.dx
         self.y += self.dy
+        
         # Check the y position of the apple
-        if self.y > 500: 
+        if self.y >= 500 or self.y <= -64: 
             self.reset()
 
 
     def reset(self):
-        x = [93, 218, 343]
-        self.x = random.choice(x)
-        self.y = -64
+        self.x = random.choice(lanes)
+        self.y = random.choice([-64, 500])
+        if self.y == -64:
+            self.dy = positive_move
+        elif self.y == 500:
+            self.dy = negative_move
 
 class Strawberry(GameObject):
     def __init__(self):
-        y = [93, 218, 343]
-        super(Strawberry, self).__init__(0, random.choice(y), 'imgs/strawberry.png')
-        self.dx = (randint(0, 200) / 100) + 1
+        super(Strawberry, self).__init__(0, random.choice(lanes), 'imgs/strawberry.png')
+        self.dx = positive_move
         self.dy = 0
         self.reset()
+        print(f'strawberry: {self.x},{self.y} {self.dx}, {self.dy}')
 
     def move(self):
         self.x += self.dx
         self.y += self.dy
-        if self.x > 500:
+        if self.x <= -64 or self.x >= 500:
             self.reset()
     
     def reset(self):
-        y = [93, 218, 343]
-        self.x = -64
-        self.y = random.choice(y)
+        self.x = random.choice([-64, 500])
+        self.y = random.choice(lanes)
+        if self.x == -64:
+            self.dx = positive_move
+        elif self.x == 500:
+            self.dx = negative_move
 
 class Player(GameObject):
     def __init__(self):
         super(Player, self).__init__(93, 93, 'imgs/player.png')
         self.dx = 93
         self.dy = 93
+        self.pos_x = 1 # new attribute
+        self.pos_y = 1 # new attribute
         self.reset()
 
     def left(self):
-        if self.dx == 93:
-            self.dx = self.dx
-        else:
-            self.dx -= 125
-
+        if self.pos_x > 0:
+            self.pos_x -= 1
+            self.update_dx_dy()
 
     def right(self):
-        if self.dx == 343:
-            self.dx = self.dx
-        else:
-            self.dx += 125
+        if self.pos_x < len(lanes) - 1:
+            self.pos_x += 1
+            self.update_dx_dy()
 
     def up(self):
-        if self.dy == 93:
-            self.dy = self.dy
-        else:
-            self.dy -= 125
+        if self.pos_y > 0:
+            self.pos_y -= 1
+            self.update_dx_dy()
 
     def down(self):
-        if self.dy == 343:
-            self.dy = self.dy
-        else:
-            self.dy += 125
+        if self.pos_y < len(lanes) - 1:
+            self.pos_y += 1
+            self.update_dx_dy()
 
     def move(self):
         self.x -= (self.x - self.dx) * 0.25
         self.y -= (self.y - self.dy) * 0.25
 
+    def update_dx_dy(self):
+        self.dx = lanes[self.pos_x]
+        self.dy = lanes[self.pos_y]
+
     def reset(self):
-        self.x = 250 - 32
-        self.y = 250 - 32
+        self.x = lanes[self.pos_x]
+        self.y = lanes[self.pos_y]
+        self.dx = self.x
+        self.dy = self.y
+
+class Bomb(GameObject):
+    def __init__(self):
+        super(Bomb, self).__init__(0, 0, 'imgs/bomb.png')
+        self.reset()
+
+    def move(self):
+        self.x += self.dx
+        self.y += self.dy
+
+        if self.x <= -64 or self.x >= 500 or self.y <= -64 or self.y >= 500:
+            self.reset()
+
+    def x_move(self):
+        self.x = random.choice([-64, 500])
+        self.y = random.choice(lanes)
+        if self.x == -64:
+            self.dx = positive_move
+            self.dy = 0
+        elif self.x == 500:
+            self.dx = negative_move
+            self.dy = 0
+
+    def y_move(self):
+        self.x = random.choice(lanes)
+        self.y = random.choice([-64, 500])
+        if self.y == -64:
+            self.dy = positive_move
+            self.dx = 0
+        elif self.y == 500:
+            self.dy = negative_move
+            self.dx = 0
+
+    def reset(self):
+        list = [self.x_move, self.y_move]
+        random.choice(list)()
+
+
 # Make an instance of GameObject
 apple=Apple()
 strawberry=Strawberry()
 player=Player()
+bomb=Bomb()
+# Make a group
+all_sprites = pygame.sprite.Group()
+all_sprites.add(player)
+all_sprites.add(apple)
+all_sprites.add(strawberry)
+all_sprites.add(bomb)
 
 """
 apple1 = GameObject(70, 70, 'imgs/apple.png')
@@ -144,27 +203,10 @@ while running:
 
     # Clear screen
     screen.fill((255, 255, 255))
-    # Draw apple
-    apple.move()
-    apple.render(screen)
-    # Draw strawberry
-    strawberry.move()
-    strawberry.render(screen)
-    # Draw player 
-    player.move()
-    player.render(screen)
-    """
-    apple1.x += 1
-    apple1.render(screen)
-    strawberry1.render(screen)
-    apple2.render(screen)
-    strawberry2.render(screen)
-    apple3.render(screen)
-    strawberry3.render(screen)
-    apple4.render(screen)
-    strawberry4.render(screen)
-    apple5.render(screen)
-    """
+    # Move and render Sprites
+    for entity in all_sprites:
+	    entity.move()
+	    entity.render(screen)
 
     # Update the window
     pygame.display.flip()
