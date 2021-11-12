@@ -13,16 +13,17 @@ negative_move = ((randint(0, 200) / 100) + 1) * -1
 
 # Create a new instance of Surface
 class GameObject(pygame.sprite.Sprite):
-  def __init__(self, x, y, image):
-    super(GameObject, self).__init__()
-    # self.surf = pygame.Surface((width, height))
-    # self.surf.fill((255, 0, 255))
-    self.surf = pygame.image.load(image)
-    self.x = x
-    self.y = y
+    def __init__(self, x, y, image):
+        super(GameObject, self).__init__()
+        self.surf = pygame.image.load(image)
+        self.x = x
+        self.y = y
+        self.rect = self.surf.get_rect() # add 
 
-  def render(self, screen):
-    screen.blit(self.surf, (self.x, self.y))
+    def render(self, screen):
+        self.rect.x = self.x # add
+        self.rect.y = self.y # add
+        screen.blit(self.surf, (self.x, self.y))
 
 class Apple(GameObject):
     def __init__(self):
@@ -152,30 +153,29 @@ class Bomb(GameObject):
         list = [self.x_move, self.y_move]
         random.choice(list)()
 
+class GameOver(GameObject):
+    def __init__(self):
+        super(GameOver, self).__init__(125, 177, 'imgs/game_over.png')
+    def reset(self):
+        self.x = -125
 
 # Make an instance of GameObject
 apple=Apple()
 strawberry=Strawberry()
 player=Player()
 bomb=Bomb()
+game_over=GameOver()
 # Make a group
 all_sprites = pygame.sprite.Group()
 all_sprites.add(player)
 all_sprites.add(apple)
 all_sprites.add(strawberry)
 all_sprites.add(bomb)
+# make a fruits Group
+fruit_sprites = pygame.sprite.Group()
+fruit_sprites.add(apple)
+fruit_sprites.add(strawberry)
 
-"""
-apple1 = GameObject(70, 70, 'imgs/apple.png')
-strawberry1 = GameObject(250, 70, 'imgs/strawberry.png')
-apple2 = GameObject(430, 70, 'imgs/apple.png')
-strawberry2 = GameObject(70, 250, 'imgs/strawberry.png')
-apple3 = GameObject(250, 250, 'imgs/apple.png')
-strawberry3 = GameObject(430, 250, 'imgs/strawberry.png')
-apple4 = GameObject(70, 430, 'imgs/apple.png')
-strawberry4 = GameObject(250, 430, 'imgs/strawberry.png')
-apple5 = GameObject(430, 430, 'imgs/apple.png')
-"""
 
 # Create the game loop
 running = True
@@ -203,11 +203,27 @@ while running:
 
     # Clear screen
     screen.fill((255, 255, 255))
+
     # Move and render Sprites
     for entity in all_sprites:
 	    entity.move()
 	    entity.render(screen)
 
+    # Check Colisions
+    fruit = pygame.sprite.spritecollideany(player, fruit_sprites)
+    if fruit:
+        fruit.reset()
+        positive_move += 0.2
+        negative_move += 0.2
+                
+    # Check collision player and bomb
+    if pygame.sprite.collide_rect(player, bomb):
+        running = False
+        game_over.render(screen)
+        for entity in all_sprites:
+            entity.dx = 0
+            entity.dy = 0
+        
     # Update the window
     pygame.display.flip()
     # tick the clock!
