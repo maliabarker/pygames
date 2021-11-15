@@ -7,9 +7,14 @@ pygame.init()
 clock = pygame.time.Clock()
 # Configure the screen
 screen = pygame.display.set_mode([500, 500])
+bg = pygame.image.load('imgs/bg2.png')
 lanes = [93, 218, 343]
 positive_move = (randint(0, 200) / 100) + 1
 negative_move = ((randint(0, 200) / 100) + 1) * -1
+#text
+score = 0
+highscore = 0
+font = pygame.font.Font("freesansbold.ttf", 15)
 
 # Create a new instance of Surface
 class GameObject(pygame.sprite.Sprite):
@@ -76,7 +81,7 @@ class Strawberry(GameObject):
 
 class Player(GameObject):
     def __init__(self):
-        super(Player, self).__init__(93, 93, 'imgs/player.png')
+        super(Player, self).__init__(93, 93, 'imgs/y.png')
         self.dx = 93
         self.dy = 93
         self.pos_x = 1 # new attribute
@@ -153,6 +158,7 @@ class Bomb(GameObject):
         list = [self.x_move, self.y_move]
         random.choice(list)()
 
+
 class GameOver(GameObject):
     def __init__(self):
         super(GameOver, self).__init__(125, 177, 'imgs/game_over.png')
@@ -200,9 +206,17 @@ while running:
             elif event.key == pygame.K_DOWN:
                 print('DOWN')
                 player.down()
+        elif event.type == pygame.MOUSEBUTTONUP:
+            pygame.event.set_allowed(pygame.KEYDOWN)
+            positive_move = (randint(0, 200) / 100) + 1
+            negative_move = ((randint(0, 200) / 100) + 1) * -1
+            score = 0
+            for entity in all_sprites:
+                entity.reset()
+                
 
     # Clear screen
-    screen.fill((255, 255, 255))
+    screen.blit(bg, (0, 0))
 
     # Move and render Sprites
     for entity in all_sprites:
@@ -215,14 +229,35 @@ while running:
         fruit.reset()
         positive_move += 0.2
         negative_move += 0.2
+        score += 1
+        if score > highscore:
+            highscore = score
                 
     # Check collision player and bomb
     if pygame.sprite.collide_rect(player, bomb):
-        running = False
-        game_over.render(screen)
+        # running = False
         for entity in all_sprites:
-            entity.dx = 0
-            entity.dy = 0
+            if entity == player:
+                pass
+            else:
+                entity.dx = 0
+                entity.dy = 0
+
+        pygame.event.set_blocked(pygame.KEYDOWN)
+
+        game_over.render(screen)
+        reset_surf = font.render('Click anywhere to restart', True, (0,0,0))
+        reset_rect = reset_surf.get_rect(center=(250, 400))
+        screen.blit(reset_surf, reset_rect)
+    
+    score_surf = font.render(f'score: {score}', True, (0,0,0))
+    highscore_surf = font.render(f'highscore: {highscore}', True, (0,0,0))
+    # You can pass the center directly to the `get_rect` method.
+    score_rect = score_surf.get_rect(center=(100, 30))
+    highscore_rect = highscore_surf.get_rect(center=(200, 30))
+    screen.blit(score_surf, score_rect)
+    screen.blit(highscore_surf, highscore_rect)
+        
         
     # Update the window
     pygame.display.flip()
