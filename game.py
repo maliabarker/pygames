@@ -1,171 +1,48 @@
 # Import and initialize pygame
 import pygame
-from random import randint, choice
-import random
-pygame.init()
-# Get the clock
-clock = pygame.time.Clock()
-# Configure the screen
-screen = pygame.display.set_mode([500, 500])
-bg = pygame.image.load('imgs/bg2.png')
-lanes = [93, 218, 343]
-positive_move = (randint(0, 200) / 100) + 1
-negative_move = ((randint(0, 200) / 100) + 1) * -1
-#text
-score = 0
-highscore = 0
-font = pygame.font.Font("freesansbold.ttf", 15)
-
-# Create a new instance of Surface
-class GameObject(pygame.sprite.Sprite):
-    def __init__(self, x, y, image):
-        super(GameObject, self).__init__()
-        self.surf = pygame.image.load(image)
-        self.x = x
-        self.y = y
-        self.rect = self.surf.get_rect() # add 
-
-    def render(self, screen):
-        self.rect.x = self.x # add
-        self.rect.y = self.y # add
-        screen.blit(self.surf, (self.x, self.y))
-
-class Apple(GameObject):
-    def __init__(self):
-
-        super(Apple, self).__init__(random.choice(lanes), 0, 'imgs/apple.png')
-        self.dx = 0
-        self.dy = (randint(0, 200) / 100) + 1
-        self.reset() # call reset here! 
-        print(f'apple: {self.x},{self.y}')
-
-    def move(self):
-
-        self.x += self.dx
-        self.y += self.dy
-        
-        # Check the y position of the apple
-        if self.y >= 500 or self.y <= -64: 
-            self.reset()
-
-
-    def reset(self):
-        self.x = random.choice(lanes)
-        self.y = random.choice([-64, 500])
-        if self.y == -64:
-            self.dy = positive_move
-        elif self.y == 500:
-            self.dy = negative_move
-
-class Strawberry(GameObject):
-    def __init__(self):
-        super(Strawberry, self).__init__(0, random.choice(lanes), 'imgs/strawberry.png')
-        self.dx = positive_move
-        self.dy = 0
-        self.reset()
-        print(f'strawberry: {self.x},{self.y} {self.dx}, {self.dy}')
-
-    def move(self):
-        self.x += self.dx
-        self.y += self.dy
-        if self.x <= -64 or self.x >= 500:
-            self.reset()
+import constants
+from constants import clock, screen, bg, score, highscore, font
+import sprites
+from sprites import Apple, Strawberry, Bomb, Player, GameOver
+'''
+# class Star(GameObject):
+#     def __init__(self):
+#         super(Star, self).__init__(125, 50, 'imgs/star.png')
     
-    def reset(self):
-        self.x = random.choice([-64, 500])
-        self.y = random.choice(lanes)
-        if self.x == -64:
-            self.dx = positive_move
-        elif self.x == 500:
-            self.dx = negative_move
+# class AnimatedObject(pygame.sprite.Sprite):
+#     def __init__(self, x, y, files):
+# 	    super(AnimatedObject, self).__init__()
+# 	    self.x = x
+# 	    self.y = y
+# 	    self.images = []
+# 	    self.index = 0
+        
+# 		# create a surface from each file in files and add a 
+# 		# surface to the images list
+#     def load_images(self):
+#         for file in self.files:
+#             surf = pygame.image.load(file)
+#             rect = surf.get_rect()
+#             self.images.append(rect)
+#     def render(self, screen):
+#         self.index += 1
+#         if self.index == len(self.images):
+#             self.index = 0
+# 		# increment index 
+# 		# if index is equal to the length of images 
+# 		# set index to 0
+# 		# blit the surface in images at the index to the screen
 
-class Player(GameObject):
-    def __init__(self):
-        super(Player, self).__init__(93, 93, 'imgs/y.png')
-        self.dx = 93
-        self.dy = 93
-        self.pos_x = 1 # new attribute
-        self.pos_y = 1 # new attribute
-        self.reset()
-
-    def left(self):
-        if self.pos_x > 0:
-            self.pos_x -= 1
-            self.update_dx_dy()
-
-    def right(self):
-        if self.pos_x < len(lanes) - 1:
-            self.pos_x += 1
-            self.update_dx_dy()
-
-    def up(self):
-        if self.pos_y > 0:
-            self.pos_y -= 1
-            self.update_dx_dy()
-
-    def down(self):
-        if self.pos_y < len(lanes) - 1:
-            self.pos_y += 1
-            self.update_dx_dy()
-
-    def move(self):
-        self.x -= (self.x - self.dx) * 0.25
-        self.y -= (self.y - self.dy) * 0.25
-
-    def update_dx_dy(self):
-        self.dx = lanes[self.pos_x]
-        self.dy = lanes[self.pos_y]
-
-    def reset(self):
-        self.x = lanes[self.pos_x]
-        self.y = lanes[self.pos_y]
-        self.dx = self.x
-        self.dy = self.y
-
-class Bomb(GameObject):
-    def __init__(self):
-        super(Bomb, self).__init__(0, 0, 'imgs/bomb.png')
-        self.reset()
-
-    def move(self):
-        self.x += self.dx
-        self.y += self.dy
-
-        if self.x <= -64 or self.x >= 500 or self.y <= -64 or self.y >= 500:
-            self.reset()
-
-    def x_move(self):
-        self.x = random.choice([-64, 500])
-        self.y = random.choice(lanes)
-        if self.x == -64:
-            self.dx = positive_move
-            self.dy = 0
-        elif self.x == 500:
-            self.dx = negative_move
-            self.dy = 0
-
-    def y_move(self):
-        self.x = random.choice(lanes)
-        self.y = random.choice([-64, 500])
-        if self.y == -64:
-            self.dy = positive_move
-            self.dx = 0
-        elif self.y == 500:
-            self.dy = negative_move
-            self.dx = 0
-
-    def reset(self):
-        list = [self.x_move, self.y_move]
-        random.choice(list)()
-
-
-class GameOver(GameObject):
-    def __init__(self):
-        super(GameOver, self).__init__(125, 177, 'imgs/game_over.png')
-    def reset(self):
-        self.x = -125
-
+# class Star(AnimatedObject):
+#     def __init__(self):
+#         super(Star, self).__init__(125, 50, ['img/star.png', 'img/star_2.png', 'img/star_3.png', 'img/star_4.png', 'img/star_5.png'])
+#         self.files = files
 # Make an instance of GameObject
+# star=Star()
+# star.load_images()
+# print(star.images)
+'''
+
 apple=Apple()
 strawberry=Strawberry()
 player=Player()
@@ -186,6 +63,7 @@ fruit_sprites.add(strawberry)
 # Create the game loop
 running = True
 while running:
+    
     # Looks at events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -208,8 +86,8 @@ while running:
                 player.down()
         elif event.type == pygame.MOUSEBUTTONUP:
             pygame.event.set_allowed(pygame.KEYDOWN)
-            positive_move = (randint(0, 200) / 100) + 1
-            negative_move = ((randint(0, 200) / 100) + 1) * -1
+            sprites.positive_move = constants.positive_move
+            sprites.negative_move = constants.negative_move
             score = 0
             for entity in all_sprites:
                 entity.reset()
@@ -227,8 +105,9 @@ while running:
     fruit = pygame.sprite.spritecollideany(player, fruit_sprites)
     if fruit:
         fruit.reset()
-        positive_move += 0.2
-        negative_move += 0.2
+        sprites.positive_move += 0.2
+        sprites.negative_move += 0.2
+        
         score += 1
         if score > highscore:
             highscore = score
@@ -250,6 +129,7 @@ while running:
         reset_rect = reset_surf.get_rect(center=(250, 400))
         screen.blit(reset_surf, reset_rect)
     
+    # TEXT
     score_surf = font.render(f'score: {score}', True, (0,0,0))
     highscore_surf = font.render(f'highscore: {highscore}', True, (0,0,0))
     # You can pass the center directly to the `get_rect` method.
@@ -257,8 +137,7 @@ while running:
     highscore_rect = highscore_surf.get_rect(center=(200, 30))
     screen.blit(score_surf, score_rect)
     screen.blit(highscore_surf, highscore_rect)
-        
-        
+                
     # Update the window
     pygame.display.flip()
     # tick the clock!
